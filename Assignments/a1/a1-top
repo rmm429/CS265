@@ -1,0 +1,201 @@
+# this function calls the current directory, creates its XML file, then
+# recursively calls its subdirectories so that their XML files can also be
+# created
+function change_dir
+{
+	
+	# setting the directory to the parameter passed to the funciton (which is
+	# either the current working directory or a directory specified as an
+	# argument)
+	DIR="$1"
+
+	echo "$DIR"
+	
+	# changing the current working directory to whatever is contained inside
+	# the variable DIR
+	cd "$DIR"
+
+	# only running the following if ther are subdirectories of the current
+	# directory
+
+	if [[ $(find -type d | wc -l) > 1 ]] ; then
+		
+		for subdirectory in $(ls -d */); do #For each directory in the directory
+			
+			# changing the directory to the current subdirectory by appending
+			# the parent directory with the subdirectory, concatenated with a
+			# "/"
+			cd "$DIR/$subdirectory"
+			
+			#setting the variable CURRENT_SUBDIR to the current working directory
+			CURRENT_SUBDIR="$(pwd)"
+
+			# creating the xml file for the current subdirectory, which is
+			# stored in the variable CURRENT_SUBDIR
+			create_xml "$CURRENT_SUBDIR"
+			
+			# setting the variable NEXT_SUBDIR to the next subdirectory in the
+			# list by appending the parent directory with the subdirectory,
+			# concatenated with a "/"
+			NEXT_SUBDIR=("DIR/$subdirectory")
+			
+			# if what is stored in the varaible NEXT_SUBDIR is, in fact, a
+			# directory, then recursively call the change_dir function with
+			# that subdirectory as the parameter
+			if [ -d "$NEXT_SUBDIR" ]; then
+				change_dir "$NEXT_SUBDIR"
+			# if what is stored in the variable NEXT_SUBDIR is not a directory,
+			# then do nothing
+			else
+				: #do nothing
+
+			fi
+
+		done    
+
+	fi                                                        
+}
+
+
+
+
+function create_xml
+{
+	# Checking to see if a README file exists
+	README_NAME="README"
+	if [ -e "$README_NAME" ] ; then
+		IS_README="T" # this means that there was a README file
+		sed -i -e 's/:/ /g' "$README_NAME" # this will make the README file usable by AWK
+	else
+		IS_README="F" # this means that there was no README file
+	fi
+
+	# checking the contents of the README file (if it exists)
+	if (("$IS_README" == "T")) ; then
+
+		# checking to see if the README has index files
+		if grep -qw "index" "$README_NAME" ; then
+			HAS_INDEX="T" # this means that the README has index files
+		else
+			HAS_INDEX="F" # this means that the README does not have index files
+		fi
+
+		# checking to see if the README has required files
+		if grep -qw "required" "$README_NAME" ; then
+			HAS_REQUIRED="T" # this means that the README has required files
+		else
+			HAS_REQUIRED="F" # this means that the README does not have required fles
+		fi
+
+	fi
+
+
+	# beginning the creation of the xml file
+	echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" > dir.xml # a single arrow is used to overwrite the dir.xml file that may have existed previously
+	echo "<direntry>" >> dir.xml # double arrows append to the current file
+
+	# running the following code only if the README had index files
+	if [ "$HAS_INDEX" == "T" ] ; then
+
+		echo "   <index>" >> dir.xml
+		
+		# going through each index file
+		for file in $(awk '$1=="index" {for( i=2; i<=NF; ++i) print $i}' "$README_NAME") ; do
+			
+			# if the index file is in fact a file, specify that in the dir.xml
+			# file
+			if [ -f "$file" ] ; then
+				(echo "      <file>" ; echo "$file" ; echo "</file>") | sed ':a;N;s/\n//;ba' >> dir.xml
+			# if the index file is a directory, specify that in the dir.xml
+			# file
+			else
+				(echo "      <dir>" ; echo "$file" ; echo "</dir>") | sed ':a;N;s/\n//;ba' >> dir.xml
+			fi
+
+		done
+		
+		echo "   </index>" >> dir.xml
+
+	fi
+
+	# running the following code only if the README had required files
+	if [ "$HAS_REQUIRED" == "T" ] ; then
+
+		echo "   <required>" >> dir.xml
+
+		# going through each required file
+		for file in $(awk '$1=="required" {for( i=2; i<=NF; ++i) print $i}' "$README_NAME") ; do
+			
+			# if the required file is in fact a file, specify that in the
+			# dir.xml file
+			if [ -f "$file" ] ; then
+				(echo "      <file>" ; echo "$file" ; echo "</file>") | sed ':a;N;s/\n//;ba' >> dir.xml
+			# if the required file is a directory, specify that in the dir.xml
+			# file
+			else
+				(echo "      <dir>" ; echo "$file" ; echo "</dir>") | sed ':a;N;s/\n//;ba' >> dir.xml
+			fi
+
+		done
+
+		echo "   </required>" >> dir.xml
+	fi
+
+	# creating the section for the other files
+	echo "   <other>" >> dir.xml
+
+	# going through the contents of the current directory
+	for content in $(ls) ; do
+
+		# ensuring that dir.xml does not show up in the dir.xml file itself as
+		# a contained file
+		if [ "$content" == "dir.xml" ] ; then
+			:
+		else
+			
+			# if this speicifc file appeared in the README file, don't output
+			# it in this section (it was already outputted in either the index
+			# or required section)
+			if grep -qw "$content" "$README_NAME" ; then
+				: # doing nothing
+			# listing the file or directory if it was not contained in the
+			# README file
+			else
+				
+				# if the current file is in fact a file, specify that in the
+				# dir.xml file
+				if [ -f "$content" ] ; then
+					(echo "      <file>" ; echo "$content" ; echo "</file>") | sed ':a;N;s/\n//;ba' >> dir.xml
+				# if the current file is a directory, specify that in the
+				# dir.xml file
+				else
+					(echo "      <dir>" ; echo "$content" ; echo "</dir>") | sed ':a;N;s/\n//;ba' >> dir.xml
+				fi
+		
+			fi
+		fi
+		
+	done
+
+	# ending the other section
+	echo "   </other>" >> dir.xml
+
+	#finishing the dir.xml file
+	echo "</direntry>" >> dir.xml
+	
+}
+
+
+
+
+# if there are arguments, set the variable DIR to that argument
+if (( "$#" > 0 )) ; then
+	DIR="${1}" # setting the variable DIR to the argument
+# if there are no arguments, set the variable DIR to the current directory
+else
+	DIR="$pwd" # setting the variable DIR to the current directory
+fi
+
+# calling the function change_dir and sending the variable DIR as a
+# parameter
+change_dir "$DIR"

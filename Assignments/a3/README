@@ -1,0 +1,10 @@
+Since there was no defined way to exit the code in the instructions and we
+were not allowed to prompt at all, the only way to exit the code is by Ctrl+C
+(or something similar to that).
+
+Because of this, by running "ant," my build.xml file will never get to the
+"clean" target because the code is killed before "clean" can run.
+
+So, to actually clean, the command "ant clean" has to be executed.  Just "ant"
+will run the code and allow for input but not clean, and just "ant clean" will
+not run the code but perform the clean correctly.

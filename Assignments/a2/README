@@ -1,0 +1,13 @@
+1. The reason I did not include the file philly_loc.py and, rather, copied the
+function and put it into my findStops.py file is because in the "What to hand
+in" section, it only specified to turn in the findStops.py file.  This led me
+to believe that I needed to incorporate the getLoc() function into my file
+rather than include the file and use the function that way.
+
+2. My final dictionary contains keys that are the string that will be output
+in the end and values that are the distance from the current location
+(generated).  Within the key, the distance is already there, so I did not call
+the key and value when I printed out the stations by distance because the key
+already contained the distance from the current location in it.  However, I
+still did use the distance value when I sorted the dictionary by value, thus
+proving use for the values of the dictionary.

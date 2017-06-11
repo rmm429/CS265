@@ -1,0 +1,27 @@
+The program will look for the environment variable CDDB and the string
+filename will be set to that value if CDDB exists.  If CDDB does not exist,
+the string filename will be set to a default value, "albums.db."
+The environment variable needs to be entered by the user on the command line
+as an exported environment variable before executing the script to have the
+Python code traverse the appropriate albums database, e.g. "export
+CDDB="al.db"" will set the filename in the Python program as "al.db" when it
+is executed.
+
+The Python program is called a4.py.
+The  makefile target "build" copies the text from a4.py and puts it in a new
+file named cddb and has a4.py as a dependency.  Then, cddb is given execution
+permissions.  This is the default target, so calling either "make build" or
+"make" will create the executable.
+The makefile target "clean" removes cddb and has cddb as a dependency.  Clean
+can be executed by calling "make clean."
+The makefile target "view" prints out the text contained in the file a4.py
+and has a4.py as a dependency.  View can be executed by calling "make view."
+
+The program can run one command at a time and the program quits after that
+command has completed.
+
+I have submitted my "albums.db" albums database just as an additional
+reference and/or testing point because it tests all possible options for
+albums, including multiple albums released in the same year for the same
+artist, multiple albums released in the same year for different artist, and so
+on.

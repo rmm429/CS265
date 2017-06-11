@@ -1,0 +1,11 @@
+Two functions are used here to complete the procedure of recursively going
+through subdirectories and creating xml files.
+
+The only weird thing I noticed is that the terminal outputs that no
+README files exist, but this only happens occassionally and very minimally
+compared to how many subdirectories I traversed through in my test.
+If you find out why this is happening, I would love to know the reason for
+this small error.
+
+Other than that, the code still works fine and all of the xml files are
+produced appropriately.
